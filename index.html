@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subnetting, Supernetting y VLSM visual</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f3f6fa;
+      color: #182235;
+    }
+    .container {
+      width: min(1360px, 96%);
+      margin: 0 auto;
+      padding: 18px 0 30px;
+    }
+    .hero, .card {
+      background: #fff;
+      border: 1px solid #e3e9f1;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(14, 28, 48, 0.06);
+    }
+    .hero {
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0 0 6px; font-size: 1.55rem; }
+    h2 { margin: 0 0 10px; font-size: 1.05rem; }
+    h3 { margin: 0 0 8px; font-size: .96rem; }
+    p { margin-top: 0; }
+    .muted { color: #647386; line-height: 1.4; font-size: .92rem; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab, button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-weight: 700;
+      background: #e9eef5;
+      color: #182235;
+      transition: .16s ease;
+    }
+    .tab.active, button.primary { background: #182235; color: #fff; }
+    button:hover, .tab:hover { transform: translateY(-1px); opacity: .94; }
+    .grid {
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .card { padding: 15px; margin-bottom: 14px; }
+    label { display: block; margin: 0 0 5px; font-size: .82rem; font-weight: 800; color: #334155; }
+    input, textarea, select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: .95rem;
+      background: #fff;
+    }
+    textarea { min-height: 170px; resize: vertical; font-family: Consolas, Monaco, monospace; }
+    .field { margin-bottom: 10px; }
+    .inline { display: flex; gap: 8px; align-items: center; }
+    .inline span { font-weight: 900; font-size: 1.15rem; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .info-box, .note {
+      background: #eef4fb;
+      border-radius: 12px;
+      padding: 10px;
+      line-height: 1.5;
+      font-size: .88rem;
+    }
+    .note { background: #fff8dc; border-left: 4px solid #f2c94c; }
+    .error { background: #fff0f0; color: #9d1111; border-radius: 12px; padding: 10px; font-weight: 700; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #182235;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: .82rem;
+      white-space: nowrap;
+    }
+    .badge.light { background: #e9eef5; color: #182235; }
+    .section-title { display: flex; justify-content: space-between; gap: 10px; align-items: start; flex-wrap: wrap; margin-bottom: 10px; }
+    .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 10px 0; }
+    .stat { background: #f1f5f9; border-radius: 12px; padding: 10px; min-width: 0; }
+    .stat .label { color: #647386; font-size: .75rem; margin-bottom: 4px; }
+    .stat .value { font-size: 1rem; font-weight: 900; word-break: break-word; }
+    .bit-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .bit-box { border: 1px solid #e3e9f1; border-radius: 12px; padding: 10px; background: #fbfdff; }
+    .bit-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .bit {
+      width: 42px;
+      height: 42px;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      background: white;
+      color: #647386;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 1rem;
+      font-weight: 900;
+      padding: 0;
+      position: relative;
+    }
+    .bit.net { background: #182235; color: white; border-color: #182235; }
+    .bit.borrow { background: #2563eb; color: white; border-color: #2563eb; }
+    .bit.host { background: #fff; color: #647386; }
+    .bit.released { background: #16a34a; color: white; border-color: #16a34a; }
+    .bit.disabled { opacity: .38; cursor: not-allowed; }
+    .bit small { display: block; font-size: .55rem; font-weight: 500; opacity: .78; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; font-size:.78rem; color:#647386; }
+    .legend span { display:inline-flex; align-items:center; gap:5px; }
+    .dot { width:10px; height:10px; border-radius:999px; display:inline-block; background:#cbd5e1; }
+    .dot.net { background:#182235; } .dot.borrow { background:#2563eb; } .dot.host { background:#fff; border:1px solid #cbd5e1; } .dot.released { background:#16a34a; }
+    .binary-box {
+      background: #101827;
+      color: #eef3ff;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    code, .mono { font-family: Consolas, Monaco, monospace; }
+    .binary-box code { display: block; margin-top: 6px; font-size: .88rem; word-break: break-all; }
+    .table-wrap { overflow-x: auto; border: 1px solid #e3e9f1; border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; background: white; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #e8eef5; font-size: .86rem; }
+    th { background: #f1f5f9; font-size: .78rem; color: #334155; }
+    td { font-family: Consolas, Monaco, monospace; }
+    td:first-child, th:first-child { font-family: Arial, Helvetica, sans-serif; font-weight: 800; }
+    tr:hover td { background: #f8fafc; }
+    .mode { display: none; }
+    .mode.active { display: block; }
+    .compact-line { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .visual-blocks { display:flex; width:100%; min-height:50px; border-radius:12px; overflow:hidden; border:1px solid #dbe3ee; background:#f8fafc; }
+    .vblock { display:flex; align-items:center; justify-content:center; min-width:28px; border-right:1px solid rgba(255,255,255,.55); color:white; font-weight:800; font-size:.78rem; text-shadow:0 1px 2px rgba(0,0,0,.28); padding:4px; }
+    .vblock:last-child { border-right:0; }
+    .vblock.lightText { color:#182235; text-shadow:none; }
+    .vblock.free { background:#e2e8f0; color:#334155; text-shadow:none; }
+    .vblock.small { font-size:.7rem; min-width:18px; }
+    .scale-row { display:flex; justify-content:space-between; gap:12px; font-family:Consolas, Monaco, monospace; color:#647386; font-size:.78rem; margin-top:5px; }
+    .arrow-row { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; margin:10px 0; }
+    .arrow-card { background:#f8fafc; border:1px solid #e3e9f1; border-radius:12px; padding:10px; text-align:center; }
+    .arrow { font-size:1.6rem; font-weight:900; color:#2563eb; }
+    .formula-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+    .formula { background:#f8fafc; border:1px solid #e3e9f1; border-radius:12px; padding:10px; font-size:.86rem; line-height:1.45; }
+    .vlsm-steps { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .step-card { border:1px solid #e3e9f1; border-radius:12px; padding:10px; background:#fbfdff; }
+    .mini-progress { height:16px; background:#e2e8f0; border-radius:999px; overflow:hidden; display:flex; margin-top:6px; }
+    .mini-used { height:100%; }
+    .color1{background:#2563eb}.color2{background:#16a34a}.color3{background:#f97316}.color4{background:#9333ea}.color5{background:#dc2626}.color6{background:#0891b2}.color7{background:#ca8a04}.color8{background:#475569}.color9{background:#db2777}.color10{background:#0f766e}
+    @media (max-width: 1040px) {
+      .grid, .bit-area, .vlsm-steps { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .formula-grid { grid-template-columns:1fr; }
+      .arrow-row { grid-template-columns:1fr; }
+      .arrow { transform:rotate(90deg); }
+    }
+    @media (max-width: 560px) {
+      .stats, .two, .three { grid-template-columns: 1fr; }
+      .bit { width: 38px; height: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <div>
+        <h1>Subnetting, Supernetting y VLSM visual</h1>
+        <p class="muted">Aprende viendo qué bits cambian, cómo se parte o agrupa el espacio y cómo se asignan los rangos.</p>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-mode="subnet">Subnetting</button>
+        <button class="tab" data-mode="supernet">Supernetting</button>
+        <button class="tab" data-mode="vlsm">VLSM</button>
+      </div>
+    </section>
+
+    <section id="subnet" class="mode active">
+      <div class="grid">
+        <aside class="card">
+          <h2>Red base</h2>
+          <div class="field"><label>Dirección IP de red</label><input id="subIp" value="192.168.20.0"></div>
+          <div class="field"><label>CIDR base</label><div class="inline"><span>/</span><input id="subCidr" type="number" min="0" max="30" value="24"></div></div>
+          <div class="two"><button id="subEx1">/24 → /26</button><button id="subEx2">/22 → /23</button></div>
+          <div id="subBaseInfo" class="info-box" style="margin-top:10px"></div>
+          <div class="note" style="margin-top:10px"><strong>Idea:</strong> subir el prefijo toma bits de host y los convierte en red. Resultado: más subredes, menos hosts por subred.</div>
+        </aside>
+
+        <section>
+          <article class="card">
+            <div class="section-title"><h2>Bits y cálculos</h2><span id="subBadge" class="badge"></span></div>
+            <div class="bit-area">
+              <div class="bit-box">
+                <strong>Octeto interesante completo</strong>
+                <p class="muted">Negro = red original · Azul = bits prestados · Blanco = host.</p>
+                <div id="octetBits" class="bit-row"></div>
+                <div class="legend"><span><i class="dot net"></i> Red original</span><span><i class="dot borrow"></i> Prestado</span><span><i class="dot host"></i> Host</span></div>
+                <p id="octetSummary" class="muted"></p>
+              </div>
+              <div class="bit-box">
+                <strong>Bits prestados desde la red base</strong>
+                <p class="muted">Haz clic para ver cómo se divide la red.</p>
+                <div id="borrowBits" class="bit-row"></div>
+                <p id="borrowSummary" class="muted"></p>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="label">CIDR nuevo</div><div id="subNewCidr" class="value"></div></div>
+              <div class="stat"><div class="label">Máscara</div><div id="subMask" class="value"></div></div>
+              <div class="stat"><div class="label">Subredes</div><div id="subCount" class="value"></div></div>
+              <div class="stat"><div class="label">Hosts útiles</div><div id="subHosts" class="value"></div></div>
+              <div class="stat"><div class="label">Bloque</div><div id="subBlock" class="value"></div></div>
+              <div class="stat"><div class="label">Salto</div><div id="subJump" class="value"></div></div>
+            </div>
+            <h3>Representación del espacio dividido</h3>
+            <div id="subVisual" class="visual-blocks"></div><div id="subScale" class="scale-row"></div>
+            <div class="binary-box"><strong>Máscara en binario</strong><code id="subMaskBinary"></code><p id="subRule" class="muted" style="color:#c7d2e5;margin:6px 0 0"></p></div>
+          </article>
+          <article class="card">
+            <div class="section-title"><h2>Tabla de subredes</h2><span id="subTableBadge" class="badge light"></span></div>
+            <div class="table-wrap"><table><thead><tr><th>#</th><th>Red</th><th>Primer host</th><th>Último host</th><th>Broadcast</th></tr></thead><tbody id="subTable"></tbody></table></div>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <section id="supernet" class="mode">
+      <div class="grid">
+        <aside class="card">
+          <h2>Supernetting</h2>
+          <div class="field"><label>IP o red inicial</label><input id="supIp" value="192.168.0.0"></div>
+          <div class="field"><label>CIDR original</label><div class="inline"><span>/</span><input id="supCidr" type="number" min="1" max="30" value="24"></div></div>
+          <div class="field"><label>Bits de red que pasan a host</label><input id="supBits" type="number" min="0" max="16" value="1"></div>
+          <div class="field"><label>Tirador visual</label><input id="supRange" type="range" min="0" max="16" value="1"></div>
+          <div class="two"><button id="supEx1">/24 → /23</button><button id="supEx2">/24 → /22</button></div>
+          <div class="note" style="margin-top:10px"><strong>Idea:</strong> bajar el prefijo libera bits de red y los devuelve a host. Resultado: menos redes, más hosts.</div>
+        </aside>
+        <section>
+          <article class="card">
+            <div class="section-title"><h2>Bits que pasan de red a host</h2><span id="supBadge" class="badge"></span></div>
+            <div class="bit-area">
+              <div class="bit-box">
+                <strong>Antes</strong>
+                <p class="muted">Máscara original. Los bits negros son red.</p>
+                <div id="supBeforeBits" class="bit-row"></div>
+              </div>
+              <div class="bit-box">
+                <strong>Después</strong>
+                <p class="muted">Haz clic en un bit para elegir hasta dónde baja el prefijo. Los verdes pasan de red a host.</p>
+                <div id="supAfterBits" class="bit-row"></div>
+                <div class="legend"><span><i class="dot net"></i> Red</span><span><i class="dot released"></i> Red → host</span><span><i class="dot host"></i> Host</span></div>
+              </div>
+            </div>
+
+            <div class="arrow-row">
+              <div class="arrow-card"><strong>Antes</strong><br><span id="supBeforeText" class="mono"></span></div>
+              <div class="arrow">→</div>
+              <div class="arrow-card"><strong>Después</strong><br><span id="supAfterText" class="mono"></span></div>
+            </div>
+
+            <div class="stats">
+              <div class="stat"><div class="label">CIDR nuevo</div><div id="supNewCidr" class="value"></div></div>
+              <div class="stat"><div class="label">Máscara</div><div id="supMask" class="value"></div></div>
+              <div class="stat"><div class="label">Red resumida</div><div id="supNetwork" class="value"></div></div>
+              <div class="stat"><div class="label">Hosts útiles</div><div id="supHosts" class="value"></div></div>
+              <div class="stat"><div class="label">Agrupa redes</div><div id="supGrouped" class="value"></div></div>
+              <div class="stat"><div class="label">Bloque</div><div id="supBlock" class="value"></div></div>
+            </div>
+
+            <h3>Redes agrupadas dentro de la superred</h3>
+            <p class="muted">Cada bloque representa una red del tamaño original que queda dentro de la nueva red más grande.</p>
+            <div id="supVisual" class="visual-blocks"></div><div id="supScale" class="scale-row"></div>
+
+            <div class="formula-grid">
+              <div class="formula"><strong>Prefijo</strong><br><span id="supFormula1" class="mono"></span></div>
+              <div class="formula"><strong>Redes agrupadas</strong><br><span id="supFormula2" class="mono"></span></div>
+              <div class="formula"><strong>Hosts útiles</strong><br><span id="supFormula3" class="mono"></span></div>
+            </div>
+            <div class="binary-box"><strong>Máscara en binario</strong><code id="supMaskBinary"></code></div>
+          </article>
+          <article class="card">
+            <div class="section-title"><h2>Rango de la superred</h2></div>
+            <div class="table-wrap"><table><thead><tr><th>Red</th><th>Primer host</th><th>Último host</th><th>Broadcast</th></tr></thead><tbody id="supTable"></tbody></table></div>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <section id="vlsm" class="mode">
+      <div class="grid">
+        <aside class="card">
+          <h2>VLSM con varias redes</h2>
+          <div class="field"><label>Red principal</label><input id="vIp" value="172.16.0.0"></div>
+          <div class="field"><label>CIDR principal</label><div class="inline"><span>/</span><input id="vCidr" type="number" min="0" max="30" value="22"></div></div>
+          <div class="field"><label>Necesidades, una por línea</label><textarea id="vNeeds">Administración,300
+Ventas,120
+Soporte,60
+IT,28
+Servidores,14
+Enlace A-B,2
+Enlace B-C,2</textarea></div>
+          <div class="two"><button id="vExample">Ejemplo</button><button id="vCalculate" class="primary">Calcular</button></div>
+          <div class="note" style="margin-top:10px"><strong>Formato:</strong> Nombre,hosts. VLSM ordena de mayor a menor y asigna primero los bloques grandes.</div>
+        </aside>
+        <section>
+          <article class="card">
+            <div class="section-title"><h2>1. De necesidades a máscaras</h2><span id="vBadge" class="badge"></span></div>
+            <div id="vSummary" class="info-box" style="margin-bottom:10px"></div>
+            <div class="vlsm-steps" id="vSteps"></div>
+          </article>
+
+          <article class="card">
+            <div class="section-title"><h2>2. Mapa visual del espacio asignado</h2><span id="vUsedBadge" class="badge light"></span></div>
+            <p class="muted">La barra representa toda la red principal. Cada color es una subred VLSM; el gris es espacio libre.</p>
+            <div id="vVisual" class="visual-blocks"></div><div id="vScale" class="scale-row"></div>
+          </article>
+
+          <article class="card">
+            <div class="section-title"><h2>3. Tabla final VLSM</h2></div>
+            <div class="table-wrap"><table><thead><tr><th>Área</th><th>Hosts</th><th>CIDR</th><th>Máscara</th><th>Bloque</th><th>Red</th><th>Primer host</th><th>Último host</th><th>Broadcast</th></tr></thead><tbody id="vTable"></tbody></table></div>
+          </article>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const bitValues = [128,64,32,16,8,4,2,1];
+    let borrowedBits = 2;
+
+    function ipToInt(ip){
+      const p = ip.trim().split('.').map(Number);
+      if(p.length!==4 || p.some(n=>Number.isNaN(n)||n<0||n>255)) return null;
+      return p.reduce((a,n)=>(((a<<8)>>>0)+n)>>>0,0)>>>0;
+    }
+    function intToIp(n){ return [24,16,8,0].map(s=>(n>>>s)&255).join('.'); }
+    function cidrToMask(c){ if(c===0) return 0; return (0xffffffff << (32-c))>>>0; }
+    function maskToDecimal(c){ return intToIp(cidrToMask(c)); }
+    function wildcard(c){ return intToIp((~cidrToMask(c))>>>0); }
+    function bin(n){ return [24,16,8,0].map(s=>(((n>>>s)&255).toString(2).padStart(8,'0'))).join('.'); }
+    function fmt(n){ return Number(n).toLocaleString('es-ES'); }
+    function rangeFor(network, cidr){
+      const size = 2 ** (32-cidr);
+      const broadcast = (network + size - 1) >>> 0;
+      return { size, broadcast, first: size>2 ? network+1 : network, last: size>2 ? broadcast-1 : broadcast };
+    }
+    function interesting(cidr){
+      const octets = maskToDecimal(cidr).split('.').map(Number);
+      const oi = Math.floor(cidr/8);
+      const partial = cidr % 8;
+      const octet = partial===0 ? Math.max(0, oi-1) : oi;
+      const maskValue = octets[octet];
+      const jump = maskValue===255 ? 1 : 256-maskValue;
+      return { octet, maskValue, jump, partial: partial===0 ? 8 : partial };
+    }
+    function minimumCidrForHosts(hosts){
+      let needed = hosts + 2, bits = 0;
+      while((2 ** bits) < needed) bits++;
+      return 32 - bits;
+    }
+    function usable(cidr){ return Math.max(0, (2 ** (32-cidr))-2); }
+    function classByIndex(i){ return 'color'+((i%10)+1); }
+    function makeBlock(label, width, cls, title){
+      const div=document.createElement('div');
+      div.className='vblock '+cls+(width<5?' small':'');
+      div.style.width=Math.max(width, width>0 && width<2 ? 2 : width)+'%';
+      div.textContent=label;
+      div.title=title || label;
+      return div;
+    }
+
+    document.querySelectorAll('.tab').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.mode').forEach(m=>m.classList.remove('active'));
+        btn.classList.add('active');
+        $(btn.dataset.mode).classList.add('active');
+      });
+    });
+
+    function subnetData(){
+      const ip = ipToInt($('subIp').value);
+      const baseCidr = Number($('subCidr').value);
+      if(ip===null || !Number.isInteger(baseCidr) || baseCidr<0 || baseCidr>30) return {error:'Introduce IP válida y CIDR entre /0 y /30.'};
+      const maxBorrow = 30-baseCidr;
+      borrowedBits = Math.max(0, Math.min(borrowedBits, maxBorrow));
+      const newCidr = baseCidr + borrowedBits;
+      const base = ip & cidrToMask(baseCidr);
+      const hostBits = 32-newCidr;
+      const size = 2 ** hostBits;
+      const count = 2 ** borrowedBits;
+      const show = Math.min(count,64);
+      const intr = interesting(newCidr);
+      const subnets=[];
+      for(let i=0;i<show;i++){
+        const net = (base + i*size)>>>0;
+        const r = rangeFor(net,newCidr);
+        subnets.push({n:i+1, net, ...r});
+      }
+      return {baseCidr,maxBorrow,newCidr,base,hostBits,size,count,show,intr,subnets};
+    }
+
+    function renderSubnet(){
+      const d = subnetData();
+      if(d.error){ $('subBaseInfo').className='error'; $('subBaseInfo').textContent=d.error; return; }
+      $('subBaseInfo').className='info-box';
+      $('subBaseInfo').innerHTML=`<strong>Red normalizada:</strong> ${intToIp(d.base)}/${d.baseCidr}<br><strong>Bits host iniciales:</strong> ${32-d.baseCidr}<br><strong>Bits prestables:</strong> ${d.maxBorrow}`;
+      $('subBadge').textContent=`/${d.baseCidr} + ${borrowedBits} bits = /${d.newCidr}`;
+
+      $('borrowBits').innerHTML='';
+      for(let i=0;i<d.maxBorrow;i++){
+        const b=document.createElement('button');
+        b.className='bit '+(i<borrowedBits?'borrow':'host');
+        b.innerHTML=`${i<borrowedBits?'1':'0'}<small>${i+1}</small>`;
+        b.onclick=()=>{ borrowedBits = (i+1===borrowedBits) ? i : i+1; renderSubnet(); };
+        $('borrowBits').appendChild(b);
+      }
+      if(d.maxBorrow===0) $('borrowBits').innerHTML='<p class="muted">No hay bits prestables si quieres conservar hosts útiles.</p>';
+      $('borrowSummary').innerHTML=`Prestados: <strong>${borrowedBits}</strong> · Quedan para host: <strong>${d.hostBits}</strong>`;
+
+      $('octetBits').innerHTML='';
+      const octetStart = d.intr.octet*8;
+      for(let i=0;i<8;i++){
+        const globalBit = octetStart+i+1;
+        let cls='host', val='0';
+        if(globalBit<=d.baseCidr){ cls='net disabled'; val='1'; }
+        else if(globalBit<=d.newCidr){ cls='borrow'; val='1'; }
+        const b=document.createElement('button');
+        b.className='bit '+cls;
+        b.innerHTML=`${val}<small>${bitValues[i]}</small>`;
+        if(globalBit>d.baseCidr){
+          b.onclick=()=>{ const desired=octetStart+i+1; borrowedBits=Math.max(0,Math.min(desired-d.baseCidr,d.maxBorrow)); renderSubnet(); };
+        }
+        $('octetBits').appendChild(b);
+      }
+      $('octetSummary').innerHTML=`Octeto ${d.intr.octet+1}: máscara <strong>${d.intr.maskValue}</strong>. Salto <strong>${d.intr.jump}</strong>.`;
+
+      $('subNewCidr').textContent=`/${d.newCidr}`;
+      $('subMask').textContent=maskToDecimal(d.newCidr);
+      $('subCount').textContent=fmt(d.count);
+      $('subHosts').textContent=fmt(Math.max(0,d.size-2));
+      $('subBlock').textContent=fmt(d.size);
+      $('subJump').textContent=d.intr.jump;
+      $('subMaskBinary').textContent=bin(cidrToMask(d.newCidr));
+      $('subRule').innerHTML=`Máscara del octeto ${d.intr.octet+1}: 256 - ${d.intr.jump} = ${d.intr.maskValue}. Wildcard: ${wildcard(d.newCidr)}.`;
+      $('subTableBadge').textContent=`Mostrando ${d.show} de ${fmt(d.count)}`;
+      $('subTable').innerHTML=d.subnets.map(s=>`<tr><td>${s.n}</td><td>${intToIp(s.net)}/${d.newCidr}</td><td>${intToIp(s.first)}</td><td>${intToIp(s.last)}</td><td>${intToIp(s.broadcast)}</td></tr>`).join('');
+
+      const vis=$('subVisual'); vis.innerHTML='';
+      const blocks=Math.min(d.count,32);
+      for(let i=0;i<blocks;i++) vis.appendChild(makeBlock(String(i+1),100/blocks,classByIndex(i),`Subred ${i+1}`));
+      if(d.count>32) vis.appendChild(makeBlock('...',6,'free','Más subredes no mostradas'));
+      $('subScale').innerHTML=`<span>${intToIp(d.base)}</span><span>${intToIp(rangeFor(d.base,d.baseCidr).broadcast)}</span>`;
+    }
+
+    function renderMaskBits(containerId, oldCidr, newCidr, mode){
+      const container=$(containerId); container.innerHTML='';
+      const minCidr = Math.max(0, oldCidr - 15);
+      const start=Math.floor(minCidr/8)*8;
+      const end=Math.min(start+16,32);
+      for(let pos=start+1; pos<=end; pos++){
+        let cls='host', val='0', clickable=false;
+        if(mode==='before'){
+          if(pos<=oldCidr){ cls='net'; val='1'; }
+        }else{
+          if(pos<=newCidr){ cls='net'; val='1'; clickable = pos <= oldCidr; }
+          else if(pos<=oldCidr){ cls='released'; val='0'; clickable = true; }
+        }
+        const b=document.createElement('button');
+        b.className='bit '+cls+(clickable ? '' : ' disabled');
+        b.innerHTML=`${val}<small>${bitValues[(pos-1)%8]}</small>`;
+        if(mode==='after' && clickable){
+          b.title = 'Haz clic para fijar aquí el nuevo prefijo de supernetting';
+          b.onclick = () => {
+            const newBits = oldCidr - pos;
+            $('supBits').value = Math.max(0, newBits);
+            renderSupernet();
+          };
+        }
+        container.appendChild(b);
+      }
+    }
+
+    function renderSupernet(){
+      const ip=ipToInt($('supIp').value), oldCidr=Number($('supCidr').value);
+      let bits=Number($('supBits').value);
+      if(ip===null || oldCidr<1 || oldCidr>30){ return; }
+      bits = Math.max(0, Math.min(bits, oldCidr - 1, 16));
+      $('supBits').value = bits;
+      $('supRange').max = Math.min(oldCidr - 1, 16);
+      $('supRange').value = bits;
+      const newCidr=oldCidr-bits;
+      const oldNet=ip & cidrToMask(oldCidr);
+      const net=ip & cidrToMask(newCidr);
+      const r=rangeFor(net,newCidr);
+      const oldRange=rangeFor(oldNet,oldCidr);
+      const grouped=2**bits;
+      $('supBadge').textContent=`/${oldCidr} → /${newCidr}`;
+      $('supBeforeText').textContent=`${intToIp(oldNet)}/${oldCidr} · ${maskToDecimal(oldCidr)}`;
+      $('supAfterText').textContent=`${intToIp(net)}/${newCidr} · ${maskToDecimal(newCidr)}`;
+      renderMaskBits('supBeforeBits',oldCidr,newCidr,'before');
+      renderMaskBits('supAfterBits',oldCidr,newCidr,'after');
+      $('supNewCidr').textContent=`/${newCidr}`;
+      $('supMask').textContent=maskToDecimal(newCidr);
+      $('supNetwork').textContent=`${intToIp(net)}/${newCidr}`;
+      $('supHosts').textContent=fmt(Math.max(0,r.size-2));
+      $('supGrouped').textContent=`${fmt(grouped)} redes /${oldCidr}`;
+      $('supBlock').textContent=fmt(r.size);
+      $('supTable').innerHTML=`<tr><td>${intToIp(net)}/${newCidr}</td><td>${intToIp(r.first)}</td><td>${intToIp(r.last)}</td><td>${intToIp(r.broadcast)}</td></tr>`;
+      $('supMaskBinary').textContent=bin(cidrToMask(newCidr));
+      $('supFormula1').textContent=`/${oldCidr} - ${bits} bits = /${newCidr}`;
+      $('supFormula2').textContent=`2^${bits} = ${grouped} redes`;
+      $('supFormula3').textContent=`2^${32-newCidr} - 2 = ${Math.max(0,r.size-2)}`;
+      const vis=$('supVisual'); vis.innerHTML='';
+      const blocks=Math.min(grouped,32);
+      for(let i=0;i<blocks;i++){
+        const subnetNet=(net + i*oldRange.size)>>>0;
+        vis.appendChild(makeBlock(`${i+1}`,100/blocks,classByIndex(i),`${intToIp(subnetNet)}/${oldCidr}`));
+      }
+      if(grouped>32) vis.appendChild(makeBlock('...',6,'free','Más redes agrupadas'));
+      $('supScale').innerHTML=`<span>${intToIp(net)}</span><span>${intToIp(r.broadcast)}</span>`;
+    }
+
+    function parseNeeds(){
+      return $('vNeeds').value.split('\n').map(line=>line.trim()).filter(Boolean).map((line,i)=>{
+        const parts=line.split(',');
+        const name=(parts[0]||`Área ${i+1}`).trim();
+        const hosts=Number((parts[1]||'0').trim());
+        return {name,hosts,original:i};
+      }).filter(x=>x.hosts>0).sort((a,b)=>b.hosts-a.hosts);
+    }
+    function renderVlsm(){
+      const ip=ipToInt($('vIp').value), baseCidr=Number($('vCidr').value);
+      if(ip===null || baseCidr<0 || baseCidr>30){ $('vSummary').className='error'; $('vSummary').textContent='Red principal no válida.'; return; }
+      const base=ip & cidrToMask(baseCidr);
+      const baseRange=rangeFor(base,baseCidr);
+      const end=baseRange.broadcast;
+      let cursor=base;
+      const needs=parseNeeds();
+      const rows=[];
+      let ok=true;
+      for(const n of needs){
+        const cidr=minimumCidrForHosts(n.hosts);
+        const size=2**(32-cidr);
+        const aligned = Math.ceil(cursor / size) * size;
+        const r=rangeFor(aligned>>>0,cidr);
+        if(r.broadcast>end) ok=false;
+        rows.push({...n,cidr,size,net:aligned>>>0,...r});
+        cursor=(r.broadcast+1)>>>0;
+      }
+      const used = rows.reduce((a,r)=>a+r.size,0);
+      const free = Math.max(0,baseRange.size-used);
+      $('vBadge').textContent= ok ? 'Plan válido' : 'No cabe en la red';
+      $('vSummary').className= ok ? 'info-box' : 'error';
+      $('vSummary').innerHTML=`<strong>Red principal:</strong> ${intToIp(base)}/${baseCidr} · Rango: ${intToIp(base)} - ${intToIp(end)}<br><strong>Orden:</strong> se ordena de mayor a menor para que los bloques grandes entren primero.<br><strong>Usado:</strong> ${fmt(used)} de ${fmt(baseRange.size)} · <strong>Libre:</strong> ${fmt(free)}`;
+      $('vTable').innerHTML=rows.map((r,i)=>`<tr><td>${r.name}</td><td>${fmt(r.hosts)}</td><td>/${r.cidr}</td><td>${maskToDecimal(r.cidr)}</td><td>${fmt(r.size)}</td><td>${intToIp(r.net)}</td><td>${intToIp(r.first)}</td><td>${intToIp(r.last)}</td><td>${intToIp(r.broadcast)}</td></tr>`).join('');
+      $('vUsedBadge').textContent=`${Math.round((used/baseRange.size)*100)}% usado`;
+
+      const steps=$('vSteps'); steps.innerHTML='';
+      rows.forEach((r,i)=>{
+        const needed=r.hosts+2;
+        const hostBits=32-r.cidr;
+        const card=document.createElement('div');
+        card.className='step-card';
+        card.innerHTML=`
+          <div class="compact-line"><span class="badge ${classByIndex(i)}">${i+1}</span><strong>${r.name}</strong></div>
+          <p class="muted" style="margin:8px 0 0">${r.hosts} hosts + 2 = ${needed} direcciones. Siguiente potencia: ${r.size} = 2^${hostBits}. Por eso usa <strong>/${r.cidr}</strong>.</p>
+          <div class="mini-progress"><div class="mini-used ${classByIndex(i)}" style="width:${Math.min(100,(needed/r.size)*100)}%"></div></div>
+          <p class="muted" style="margin:6px 0 0">Aprovechamiento del bloque: ${Math.round((needed/r.size)*100)}%</p>
+        `;
+        steps.appendChild(card);
+      });
+
+      const vis=$('vVisual'); vis.innerHTML='';
+      rows.forEach((r,i)=>{
+        const pct=(r.size/baseRange.size)*100;
+        vis.appendChild(makeBlock(r.name.length>10?r.name.slice(0,9)+'…':r.name,pct,classByIndex(i),`${r.name}: ${intToIp(r.net)}/${r.cidr} · bloque ${r.size}`));
+      });
+      if(free>0) vis.appendChild(makeBlock('Libre',(free/baseRange.size)*100,'free',`${fmt(free)} direcciones libres`));
+      $('vScale').innerHTML=`<span>${intToIp(base)}</span><span>${intToIp(end)}</span>`;
+    }
+
+    ['subIp','subCidr'].forEach(id=>$(id).addEventListener('input',renderSubnet));
+    $('subEx1').onclick=()=>{ $('subIp').value='192.168.20.0'; $('subCidr').value=24; borrowedBits=2; renderSubnet(); };
+    $('subEx2').onclick=()=>{ $('subIp').value='172.16.0.0'; $('subCidr').value=22; borrowedBits=1; renderSubnet(); };
+    ['supIp','supCidr','supBits'].forEach(id=>$(id).addEventListener('input',renderSupernet));
+    $('supRange').addEventListener('input',()=>{ $('supBits').value = $('supRange').value; renderSupernet(); });
+    $('supEx1').onclick=()=>{ $('supIp').value='192.168.0.0'; $('supCidr').value=24; $('supBits').value=1; renderSupernet(); };
+    $('supEx2').onclick=()=>{ $('supIp').value='192.168.0.0'; $('supCidr').value=24; $('supBits').value=2; renderSupernet(); };
+    ['vIp','vCidr','vNeeds'].forEach(id=>$(id).addEventListener('input',renderVlsm));
+    $('vCalculate').onclick=renderVlsm;
+    $('vExample').onclick=()=>{ $('vIp').value='172.16.0.0'; $('vCidr').value=22; $('vNeeds').value='Administración,300\nVentas,120\nSoporte,60\nIT,28\nServidores,14\nEnlace A-B,2\nEnlace B-C,2'; renderVlsm(); };
+
+    renderSubnet(); renderSupernet(); renderVlsm();
+  </script>
+</body>
+</html>
