@@ -1,0 +1,10 @@
+{
+  "categoria": "Redes",
+  "icono": "🌐",
+  "etiquetas": ["VLSM", "subnetting", "redes", "calculadora"],
+  "descripcion": "Calculadora para trabajar subnetting, supernetting y VLSM en redes informáticas.",
+  "demo": "",
+  "destacado": true,
+  "orden": 3,
+  "ocultar": false
+}
